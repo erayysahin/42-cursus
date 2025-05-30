@@ -1,0 +1,79 @@
+(örn. `malloc()` ve `free()`) belleğe dinamik olarak erişmek için kullanılır. Bu fonksiyonlar `stdlib.h` başlığında tanımlanmıştır. Bellek yönetimi (mevcut belleği yönetmek ve programın ihtiyaçlarına göre belleğin dinamik olarak tahsis edilmesini ve serbest bırakılmasını yönetmek) karmaşık bir süreçtir. Bu işlem dinamik bellek dağıtımı (DMA) kullanılarak yapılır.
+
+Belleği malloc() ile ayırdıktan sonra, free() komutuyla onu serbest bırakmalısınız. Aksi halde hafızayı israf etmiş ve potansiyel olarak bir bellek sızıntısı sorunu yaratmış olursunuz.
+
+Yazılım dillerinde bellek alanını doğrudan, yani statik olarak ayırma imkânı bulunmaz. Bundan dolayı, ihtiyaç duyulan bellek alanı çalışma anında dinamik olarak ayrılır. Bu işlem için de `malloc()` kullanılır. `malloc()`, içindeki adresi gösteren belleğin bir adresini geri döndürür. Bu adres ardından bu bellek alanında kullanılmak üzere pointer değişkene atanır.
+
+`malloc()` `stdlib.h` kütüphanesinde tanımlanır. Bu fonksiyon, argüman olarak istediği alanı miktarını (byte cinsinden) alır ve o kadar byte boyutunda alan ayırır. Ayrıca bu kütüphanede, `calloc()` ve `free()` de tanımlıdır. Ayrıca `realloc()` fonksiyonu da bulunmaktadır. Bu fonksiyon, da elde ettiği alanın boyutunu, geçerli duruma göre arttırır ya da azaltır.
+
+`malloc()` fonksiyonunu incelerken kendimize şu soruları sorabiliriz:
+
+* Bu fonksiyon nasıl çalışır?
+* Bu fonksiyonun parametreleri nelerdir?
+* Bu fonksiyon tarafından belleğe ayırılan alan nasıl serbest bırakılır?
+
+**Bellek Yığınları**
+
+Bellek yığınları, `malloc()` fonksiyonunun arkasındaki mekanizmadır. Yığınlar, belirli boyutlarda ayrı alanlardan oluşan bir düzenlemedir. Her bir alan "yığın bloğu" olarak adlandırılır.
+
+`malloc()` fonksiyonu, yığınlardan birinde kullanılabilir bir alan bulur ve bu alanı bize tahsis eder. Eğer kullanılabilir alan yoksa, `malloc()` fonksiyonu yeni bir yığın oluşturur ve bu yığında bir alan tahsis eder.
+
+`free()` fonksiyonu, bir yığın bloğunun tahsisini kaldırır. Bu, yığın bloğunu kullanılabilir hale getirir ve `malloc()` fonksiyonunun onu başka bir programa tahsis etmesine olanak sağlar.
+
+**`malloc()` Fonksiyonunun Parametreleri**
+
+`malloc()` fonksiyonu, aşağıdaki parametrelere sahiptir:
+
+* **size**: Bu parametre, tahsis edilmek istenen bellek alanının boyutunu (byte cinsinden) belirtir.
+* **returnType**: Bu parametre, `malloc()` fonksiyonunun geri dönüş değerinin türünü belirtir. Genellikle `void*` türünde olur, ancak bazen `char*` veya `int*` türünde de olabilir.
+
+**`malloc()` Fonksiyonunun Geri Dönüş Değeri**
+
+`malloc()` fonksiyonu, başarıyla çalışırsa tahsis edilen bellek alanının adresini geri döndürür. Eğer `malloc()` fonksiyonu başarısız olursa, `NULL` değerini geri döndürür.
+
+**`malloc()` Fonksiyonundan Belleğe Ayırılan Alan Nasıl Serbest Bırakılır?**
+
+`malloc()` fonksiyonundan belleğe ayrılan alan, `free()` fonksiyonu kullanılarak serbest bırakılabilir. `free()` fonksiyonu, aşağıdaki parametreye sahiptir:
+
+* **ptr**: Bu parametre, serbest bırakılmak istenen bellek alanının adresini belirtir.
+
+`free()` fonksiyonu, başarılı bir şekilde çalışırsa herhangi bir değer geri döndürmez. Eğer `free()` fonksiyonu başarısız olursa, genellikle `-1` değerini geri döndürür.
+
+**`malloc()` Fonksiyonunun Örnekleri**
+
+Aşağıdaki örnek kod, `malloc()` ve `free()` fonksiyonlarının nasıl kullanıldığını göstermektedir:
+
+```C
+#include <stdlib.h>
+
+int main() {
+  // 10 byte boyutunda bir bellek alanı tahsis ediyoruz
+  void* ptr = malloc(10);
+
+  // Tahsis edilen bellek alanına veri yazdırıyoruz
+  ptr[0] = 'H';
+  ptr[1] = 'e';
+  ptr[2] = 'l';
+  ptr[3] = 'l';
+  ptr[4] = 'o';
+  ptr[5] = '\n';
+
+  // Tahsis edilen bellek alanındaki veriyi ekrana yazdırıyoruz
+  printf("%s", ptr);
+
+  // Tahsis edilen bellek alanını serbest bırakıyoruz
+  free(ptr);
+
+  return 0;
+}
+```
+
+Bu kod, "Hello" kelimesini ekrana yazdıracaktır.
+
+**`malloc()` Fonksiyonunun Dikkat Edilmesi Gereken Noktalar**
+
+* `malloc()` fonksiyonu her zaman başarılı bir şekilde çalışmayabilir. Bu nedenle, `malloc()` fonksiyonunun geri dönüş değerini kontrol etmek önemlidir.
+* `malloc()` fonksiyonundan belleğe ayrılan alan, `free()` fonksiyonu kullanılarak serbest bırakılmalıdır. Aksi halde, bellek sızıntısı sorunu oluşabilir.
+* `malloc()` fonksiyonunun tahsis ettiği bellek alanının boyutu, `free()` fonksiyonuna iletilen bellek alanının boyutundan büyük olamaz.
+* `malloc()` fonksiyonunun tahsis ettiği bellek alanının boyutu, `free()` fonksiyonuna iletilen bellek alanının boyutundan küçük olabilir.
+* `malloc()` fonksiyonunun tahsis ettiği bellek alanının boyutu, `free()` fonksiyonuna iletilen bellek alanının boyutundan eşit olabilir.
