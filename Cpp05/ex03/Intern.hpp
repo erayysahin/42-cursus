@@ -3,21 +3,24 @@
 
 #include <string>
 #include <exception>
-#include "AForm.hpp"
+
+class AForm;
 
 class Intern {
 public:
+    class FormNotFoundException : public std::exception {
+    public:
+        FormNotFoundException() throw();
+        virtual ~FormNotFoundException() throw();
+        virtual const char* what() const throw();
+    };
+
     Intern();
-    Intern(const Intern&);
-    Intern& operator=(const Intern&);
+    Intern(const Intern& other);
+    Intern& operator=(const Intern& other);
     ~Intern();
 
-    AForm* makeForm(const std::string& name, const std::string& target) const;
-
-    class UnknownFormException : public std::exception {
-    public:
-        const char* what() const throw();
-    };
+    AForm* makeForm(const std::string& formName, const std::string& target) const;
 };
 
 #endif

@@ -1,28 +1,34 @@
 #include "ShrubberyCreationForm.hpp"
+#include <fstream>
 
 ShrubberyCreationForm::ShrubberyCreationForm(const std::string& target)
-    : AForm("ShrubberyCreationForm", 145, 137), _target(target)
-{
-}
+: AForm("ShrubberyCreationForm", 145, 137), _target(target) {}
 
 ShrubberyCreationForm::ShrubberyCreationForm(const ShrubberyCreationForm& other)
-    : AForm(other), _target(other._target)
-{
-}
+: AForm(other), _target(other._target) {}
 
-ShrubberyCreationForm& ShrubberyCreationForm::operator=(const ShrubberyCreationForm& other)
-{
-    if (this != &other) *((AForm*)this) = other;
+ShrubberyCreationForm& ShrubberyCreationForm::operator=(const ShrubberyCreationForm& other) {
+    if (this != &other)
+        AForm::operator=(other);
     return *this;
 }
 
-ShrubberyCreationForm::~ShrubberyCreationForm()
-{
-}
+ShrubberyCreationForm::~ShrubberyCreationForm() {}
 
-void ShrubberyCreationForm::action() const
-{
+void ShrubberyCreationForm::execute(Bureaucrat const& executor) const {
+    if (!isSigned())
+        throw AForm::GradeTooLowException();
+    if (executor.getGrade() > getExecuteGrade())
+        throw AForm::GradeTooLowException();
     std::ofstream ofs(_target + "_shrubbery");
-    ofs << "   ccee88oo\n  C8O8O8Q8PoOb o8oo\n dOB69QO8PdUOpugoO9bD\nCgggbU8OU qOp qOdoUOdcb\n    6OuU  /p u gcoUodpP\n      \\\\//  /douUP\n        \\\\////\n         |||/\\\n         |||\\/\n         |||||\n   .....//||||\\....\n";
+    ofs << "       _-_\n";
+    ofs << "    /~~   ~~\\\n";
+    ofs << " /~~         ~~\\\n";
+    ofs << "{               }\n";
+    ofs << " \\  _-     -_  /\n";
+    ofs << "   ~  \\ //  ~\n";
+    ofs << "_- -   | | _- _\n";
+    ofs << "  _ -  | |   -_\n";
+    ofs << "      // \\\n";
     ofs.close();
 }

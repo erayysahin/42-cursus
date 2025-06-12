@@ -1,30 +1,30 @@
+#include <iostream>
 #include "Bureaucrat.hpp"
 #include "ShrubberyCreationForm.hpp"
 #include "RobotomyRequestForm.hpp"
 #include "PresidentialPardonForm.hpp"
-#include <iostream>
-#include <cstdlib>
-#include <ctime>
 
-int main()
-{
-    std::srand(std::time(NULL));
+int main() {
+    std::cout << "=== ShrubberyCreationForm Test ===" << std::endl;
+    Bureaucrat alice("Alice", 140);
+    ShrubberyCreationForm shrub("home");
+    alice.signForm(shrub);
+    alice.executeForm(shrub);
 
-    Bureaucrat boss("Boss", 1);
-    Bureaucrat intern("Intern", 150);
+    std::cout << std::endl;
+    std::cout << "=== RobotomyRequestForm Test ===" << std::endl;
+    Bureaucrat bob("Bob", 50);
+    RobotomyRequestForm robo("Bender");
+    bob.signForm(robo);
+    bob.executeForm(robo);
+    bob.executeForm(robo);
 
-    ShrubberyCreationForm f1("home");
-    RobotomyRequestForm   f2("Bender");
-    PresidentialPardonForm f3("Ford Prefect");
-
-    try { intern.executeForm(f1); } catch (...) {}
-    try { boss.executeForm(f1); } catch (...) {}
-
-    try { boss.executeForm(f2); } catch (...) {}
-    try { intern.executeForm(f2); } catch (...) {}
-
-    try { boss.executeForm(f3); } catch (...) {}
-    try { intern.executeForm(f3); } catch (...) {}
+    std::cout << std::endl;
+    std::cout << "=== PresidentialPardonForm Test ===" << std::endl;
+    Bureaucrat charlie("Charlie", 1);
+    PresidentialPardonForm pardon("Arthur");
+    charlie.signForm(pardon);
+    charlie.executeForm(pardon);
 
     return 0;
 }

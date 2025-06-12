@@ -3,21 +3,19 @@
 
 #include "AForm.hpp"
 #include <string>
-#include <fstream>
 
-class ShrubberyCreationForm : public AForm
-{
+class Bureaucrat;
+
+class ShrubberyCreationForm : public AForm {
+private:
+    const std::string _target;
 public:
     ShrubberyCreationForm(const std::string& target);
     ShrubberyCreationForm(const ShrubberyCreationForm& other);
     ShrubberyCreationForm& operator=(const ShrubberyCreationForm& other);
-    ~ShrubberyCreationForm();
+    virtual ~ShrubberyCreationForm();
 
-protected:
-    void action() const;
-
-private:
-    const std::string _target;
+    virtual void execute(Bureaucrat const& executor) const;
 };
 
-#endif
+#endif 

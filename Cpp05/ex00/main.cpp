@@ -1,42 +1,42 @@
-#include "Bureaucrat.hpp"
 #include <iostream>
+#include "Bureaucrat.hpp"
 
-int main()
-{
+int main() {
+    std::cout << "=== Valid Bureaucrat Creation and Modification ===" << std::endl;
     try {
-        Bureaucrat a("Alice", 2);
-        std::cout << a << std::endl;
-        a.incrementGrade();
-        std::cout << a << std::endl;
-        a.incrementGrade();
-    }
-    catch (std::exception& e) {
-        std::cerr << e.what() << std::endl;
-    }
-
-    try {
-        Bureaucrat b("Bob", 149);
-        std::cout << b << std::endl;
-        b.decrementGrade();
-        std::cout << b << std::endl;
-        b.decrementGrade();
-    }
-    catch (std::exception& e) {
-        std::cerr << e.what() << std::endl;
+        Bureaucrat alice("Alice", 2);
+        std::cout << alice;
+        alice.incrementGrade();
+        std::cout << alice;
+        alice.incrementGrade();
+    } catch (const std::exception& e) {
+        std::cerr << "Exception caught: " << e.what() << std::endl;
     }
 
+    std::cout << std::endl;
+    std::cout << "=== Invalid Bureaucrat Creation (Too Low) ===" << std::endl;
     try {
-        Bureaucrat c("Charlie", 0);
-    }
-    catch (std::exception& e) {
-        std::cerr << e.what() << std::endl;
+        Bureaucrat bob("Bob", 151);
+    } catch (const std::exception& e) {
+        std::cerr << "Exception caught: " << e.what() << std::endl;
     }
 
+    std::cout << std::endl;
+    std::cout << "=== Invalid Bureaucrat Creation (Too High) ===" << std::endl;
     try {
-        Bureaucrat d("Dave", 151);
+        Bureaucrat charlie("Charlie", 0);
+    } catch (const std::exception& e) {
+        std::cerr << "Exception caught: " << e.what() << std::endl;
     }
-    catch (std::exception& e) {
-        std::cerr << e.what() << std::endl;
+
+    std::cout << std::endl;
+    std::cout << "=== Decrementing to Trigger Exception ===" << std::endl;
+    try {
+        Bureaucrat dave("Dave", 150);
+        std::cout << dave;
+        dave.decrementGrade();
+    } catch (const std::exception& e) {
+        std::cerr << "Exception caught: " << e.what() << std::endl;
     }
 
     return 0;

@@ -1,29 +1,56 @@
+#include <iostream>
 #include "Bureaucrat.hpp"
 #include "Form.hpp"
-#include <iostream>
 
-int main()
-{
-    Bureaucrat a("Alice", 50);
-    Form        f1("FormA", 30, 20);
-    std::cout << a << std::endl;
-    std::cout << f1 << std::endl;
-    a.signForm(f1);
-    std::cout << f1 << std::endl;
-
-    Bureaucrat b("Bob", 100);
-    Form        f2("FormB", 150, 150);
-    std::cout << b << std::endl;
-    std::cout << f2 << std::endl;
-    b.signForm(f2);
-    std::cout << f2 << std::endl;
-
+int main() {
+    std::cout << "=== Valid Bureaucrat Creation and Modification ===" << std::endl;
     try {
-        Form f3("FormC", 40, 40);
-        b.signForm(f3);
+        Bureaucrat alice("Alice", 2);
+        std::cout << alice;
+        alice.incrementGrade();
+        std::cout << alice;
+        alice.incrementGrade();
+    } catch (const std::exception& e) {
+        std::cerr << "Exception caught: " << e.what() << std::endl;
     }
-    catch (std::exception& e) {
-        std::cerr << e.what() << std::endl;
+
+    std::cout << std::endl;
+    std::cout << "=== Invalid Bureaucrat Creation (Too Low) ===" << std::endl;
+    try {
+        Bureaucrat bob("Bob", 151);
+    } catch (const std::exception& e) {
+        std::cerr << "Exception caught: " << e.what() << std::endl;
+    }
+
+    std::cout << std::endl;
+    std::cout << "=== Invalid Bureaucrat Creation (Too High) ===" << std::endl;
+    try {
+        Bureaucrat charlie("Charlie", 0);
+    } catch (const std::exception& e) {
+        std::cerr << "Exception caught: " << e.what() << std::endl;
+    }
+
+    std::cout << std::endl;
+    std::cout << "=== Decrementing to Trigger Exception ===" << std::endl;
+    try {
+        Bureaucrat dave("Dave", 150);
+        std::cout << dave;
+        dave.decrementGrade();
+    } catch (const std::exception& e) {
+        std::cerr << "Exception caught: " << e.what() << std::endl;
+    }
+
+    std::cout << std::endl;
+    std::cout << "=== Form Signing Tests ===" << std::endl;
+    try {
+        Bureaucrat john("John", 35);
+        Form contract("Contract", 30, 20);
+        john.signForm(contract);
+        std::cout << contract;
+        Bureaucrat joe("Joe", 75);
+        joe.signForm(contract);
+    } catch (const std::exception& e) {
+        std::cerr << "Exception caught: " << e.what() << std::endl;
     }
 
     return 0;
