@@ -16,7 +16,7 @@ Intern& Intern::operator=(const Intern& other) { (void)other; return *this; }
 Intern::~Intern() {}
 
 AForm* Intern::makeForm(const std::string& formName, const std::string& target) const {
-    AForm* form = nullptr;
+    AForm* form = 0;
     if (formName == "shrubbery creation")
         form = new ShrubberyCreationForm(target);
     else if (formName == "robotomy request")

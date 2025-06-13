@@ -9,20 +9,21 @@ public:
 
 private:
     ScalarConverter();
-    ~ScalarConverter();
     ScalarConverter(const ScalarConverter&);
     ScalarConverter& operator=(const ScalarConverter&);
+    ~ScalarConverter();
 
     static bool isChar(const std::string& s);
     static bool isInt(const std::string& s);
     static bool isFloat(const std::string& s);
     static bool isDouble(const std::string& s);
-    static bool isPseudo(const std::string& s);
 
-    static void printChar(double d);
-    static void printInt(double d);
-    static void printFloat(double d);
-    static void printDouble(double d);
+    static void fromChar(const std::string& s);
+    static void fromInt(const std::string& s);
+    static void fromFloat(const std::string& s);
+    static void fromDouble(const std::string& s);
+
+    static void printScalarResult(double value, bool impossibleChar, bool impossibleInt, bool impossibleFloat, const std::string& specialFloat = "", const std::string& specialDouble = "");
 };
 
 #endif

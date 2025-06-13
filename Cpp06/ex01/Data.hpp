@@ -1,14 +1,9 @@
 #ifndef DATA_HPP
 #define DATA_HPP
-
-#include <string>
-
+#include <iostream>
 struct Data {
-    int         i;
-    double      d;
-    char        c;
-    Data(int ii = 42, double dd = 3.14, char cc = 'x')
-        : i(ii), d(dd), c(cc) {}
+    int         value;      // Dilersen başka veri üyeleri de ekleyebilirsin
+    std::string str;        // Örneğin bir string ekleyebilirsin (isteğe bağlı)
 };
 
 #endif

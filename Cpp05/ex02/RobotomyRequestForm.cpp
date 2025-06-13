@@ -1,13 +1,14 @@
 #include "RobotomyRequestForm.hpp"
+#include "Bureaucrat.hpp"
 #include <iostream>
 #include <cstdlib>
 #include <ctime>
 
 RobotomyRequestForm::RobotomyRequestForm(const std::string& target)
-: AForm("RobotomyRequestForm", 72, 45), _target(target) {}
+    : AForm("RobotomyRequestForm", 72, 45), _target(target) {}
 
 RobotomyRequestForm::RobotomyRequestForm(const RobotomyRequestForm& other)
-: AForm(other), _target(other._target) {}
+    : AForm(other), _target(other._target) {}
 
 RobotomyRequestForm& RobotomyRequestForm::operator=(const RobotomyRequestForm& other) {
     if (this != &other)
@@ -22,10 +23,11 @@ void RobotomyRequestForm::execute(Bureaucrat const& executor) const {
         throw AForm::GradeTooLowException();
     if (executor.getGrade() > getExecuteGrade())
         throw AForm::GradeTooLowException();
+
     std::cout << "* drilling noises *" << std::endl;
     static bool seeded = false;
     if (!seeded) {
-        std::srand(std::time(nullptr));
+        std::srand(std::time(NULL));
         seeded = true;
     }
     if (std::rand() % 2)
