@@ -3,18 +3,19 @@
 #include <iostream>
 #include <sstream>
 #include <cstdlib>
+#include <stdexcept>
 
 BitcoinExchange::BitcoinExchange()
 {
 	loadDatabase();
 }
 
-BitcoinExchange::BitcoinExchange(const BitcoinExchange& other)
+BitcoinExchange::BitcoinExchange(const BitcoinExchange &other)
 {
 	_data = other._data;
 }
 
-BitcoinExchange& BitcoinExchange::operator=(const BitcoinExchange& other)
+BitcoinExchange &BitcoinExchange::operator=(const BitcoinExchange &other)
 {
 	if (this != &other)
 		_data = other._data;
@@ -30,12 +31,10 @@ void BitcoinExchange::loadDatabase()
 	std::ifstream db("data.csv");
 	if (!db.is_open())
 	{
-		std::cerr << "Error: could not open database." << std::endl;
-		std::exit(1);
+		throw std::runtime_error("Error: could not open database.");
 	}
-
 	std::string line;
-	std::getline(db, line); // skip header
+	std::getline(db, line);
 
 	while (std::getline(db, line))
 	{
@@ -47,29 +46,40 @@ void BitcoinExchange::loadDatabase()
 		_data[date] = value;
 	}
 }
-
-bool BitcoinExchange::isValidDate(const std::string& date) const
+bool isLeapYear(int year)
+{
+	return (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0);
+}
+std::string BitcoinExchange::isValidDate(const std::string &date) const
 {
 	if (date.size() != 10 || date[4] != '-' || date[7] != '-')
-		return false;
+		return "Error: bad input => ";
 	for (size_t i = 0; i < date.size(); ++i)
 	{
 		if (i == 4 || i == 7)
 			continue;
 		if (date[i] < '0' || date[i] > '9')
-			return false;
+			return "Error: bad input => ";
 	}
+
 	int year = std::atoi(date.substr(0, 4).c_str());
+	if (year < 2009)
+		return "Database de 2009 dan once bitcoin verisi bulunmuyor => ";
 	int month = std::atoi(date.substr(5, 2).c_str());
 	int day = std::atoi(date.substr(8, 2).c_str());
+	if (month == 2)
+	{
+		if (day > (isLeapYear(year) ? 29 : 28))
+			return "Error: Invalid day for February.";
+	}
 	if (month < 1 || month > 12)
-		return false;
+		return "Error: bad input => ";
 	if (day < 1 || day > 31)
-		return false;
-	return true;
+		return "Error: bad input => ";
+	return "";
 }
 
-bool BitcoinExchange::isNumber(const std::string& str) const
+bool BitcoinExchange::isNumber(const std::string &str) const
 {
 	if (str.empty())
 		return false;
@@ -96,86 +106,56 @@ bool BitcoinExchange::isNumber(const std::string& str) const
 	return hasDigit;
 }
 
-double BitcoinExchange::getRate(const std::string& date) const
+double BitcoinExchange::getRate(const std::string &date) const
 {
 	std::map<std::string, double>::const_iterator it = _data.lower_bound(date);
+
 	if (it != _data.end() && it->first == date)
 		return it->second;
+
 	if (it == _data.begin())
-		return -1; // no earlier date
+		return -1;
+
 	--it;
 	return it->second;
 }
 
-void BitcoinExchange::processFile(const std::string& filename) const
+void BitcoinExchange::processFile(const std::string &filename) const
 {
-	std::ifstream infile(filename.c_str());
-	if (!infile.is_open())
+	std::ifstream dbfile(filename.c_str());
+	if (!dbfile.is_open())
 	{
-		std::cerr << "Error: could not open file." << std::endl;
-		return;
+		throw std::runtime_error("dosya acilmadi.");
 	}
-
 	std::string line;
-	bool firstLine = true;
-	while (std::getline(infile, line))
+	while (std::getline(dbfile, line))
 	{
-		if (firstLine)
+		std::istringstream dpv(line);
+		std::string date, value;
+		if (!(dpv >> date >> value >> value))
 		{
-			firstLine = false;
+			std::cerr << "Error: bad input format." << std::endl;
 			continue;
 		}
-		if (line.empty())
-			continue;
+		std::string err = isValidDate(date);
+		if (!err.empty())
+			std::cerr << err << date << std::endl;
 
-		std::istringstream iss(line);
-		std::string date, sep, valueStr;
-		if (!(std::getline(iss, date, '|')))
+		else if (!isNumber(value))
+			std::cerr << "Error: bad input => " << value << std::endl;
+		else
 		{
-			std::cerr << "Error: bad input => " << line << std::endl;
-			continue;
-		}
-		if (!(std::getline(iss, valueStr)))
-		{
-			std::cerr << "Error: bad input => " << line << std::endl;
-			continue;
-		}
-		// trim spaces
-		while (!date.empty() && date[date.size() - 1] == ' ')
-			date.erase(date.size() - 1);
-		while (!valueStr.empty() && valueStr[0] == ' ')
-			valueStr.erase(0, 1);
 
-		if (!isValidDate(date))
-		{
-			std::cerr << "Error: bad input => " << date << std::endl;
-			continue;
+			double rate = getRate(date);
+			double amount = std::atof(value.c_str());
+			if (amount < 0)
+				std::cerr << "Error: not a positive number." << std::endl;
+			else if (amount > 1000)
+				std::cerr << "Error: too large a number." << std::endl;
+			else if (rate == -1)
+				std::cerr << "Error: no data for this date." << std::endl;
+			else
+				std::cout << date << " => " << amount << " = " << amount * rate << std::endl;
 		}
-		if (!isNumber(valueStr))
-		{
-			std::cerr << "Error: bad input => " << valueStr << std::endl;
-			continue;
-		}
-		double value = std::atof(valueStr.c_str());
-		if (value < 0)
-		{
-			std::cerr << "Error: not a positive number." << std::endl;
-			continue;
-		}
-		if (value > 1000)
-		{
-			std::cerr << "Error: too large a number." << std::endl;
-			continue;
-		}
-
-		double rate = getRate(date);
-		if (rate < 0)
-		{
-			std::cerr << "Error: bad input => " << date << std::endl;
-			continue;
-		}
-
-		double result = value * rate;
-		std::cout << date << " => " << value << " = " << result << std::endl;
 	}
 }

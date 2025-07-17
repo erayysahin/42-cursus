@@ -1,13 +1,19 @@
 #include "BitcoinExchange.hpp"
 #include <iostream>
-int main(int argc, char** argv)
+#include <stdexcept>
+int main(int argc, char **argv)
 {
-	if (argc != 2)
+	try
 	{
-		std::cerr << "Error: could not open file." << std::endl;
-		return 1;
+		if (argc != 2)
+			throw std::runtime_error("Bad Argument.");
+		BitcoinExchange btc;
+		btc.processFile(argv[1]);
+		return 0;
 	}
-	BitcoinExchange btc;
-	btc.processFile(argv[1]);
-	return 0;
+	catch (const std::exception &e)
+	{
+		std::cerr << e.what() << '\n';
+	}
+
 }

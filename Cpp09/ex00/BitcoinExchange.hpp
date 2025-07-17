@@ -16,9 +16,9 @@ public:
 
 private:
 	std::map<std::string, double> _data;
-
 	void loadDatabase();
-	bool isValidDate(const std::string& date) const;
+
+	std::string isValidDate(const std::string& date) const;
 	bool isNumber(const std::string& str) const;
 	double getRate(const std::string& date) const;
 };

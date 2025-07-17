@@ -4,20 +4,20 @@
 #include <cstdlib>
 
 RPN::RPN() {}
-RPN::RPN(const RPN& other) { static_cast<void>(other); }
-RPN& RPN::operator=(const RPN& other)
+RPN::RPN(const RPN &other) { static_cast<void>(other); }
+RPN &RPN::operator=(const RPN &other)
 {
 	static_cast<void>(other);
 	return *this;
 }
 RPN::~RPN() {}
 
-bool RPN::isOperator(const std::string& token) const
+bool RPN::isOperator(const std::string &token) const
 {
 	return (token == "+" || token == "-" || token == "*" || token == "/");
 }
 
-int RPN::applyOp(int a, int b, const std::string& op) const
+int RPN::applyOp(int a, int b, const std::string &op) const
 {
 	if (op == "+")
 		return a + b;
@@ -34,31 +34,22 @@ int RPN::applyOp(int a, int b, const std::string& op) const
 	throw std::runtime_error("Error");
 }
 
-int RPN::evaluate(const std::string& expr) const
+int RPN::evaluate(const std::string &expr) const
 {
-	std::istringstream iss(expr);
-	std::stack<int> st;
+	std::istringstream str(expr);
+	std::stack<int> stack;
 	std::string token;
-	while (iss >> token)
+	std::string arg;
+	str >> arg;
+	stack.push(atoi(arg.c_str()));
+	if (stack.top() > 9)
+		throw std::runtime_error("error");
+	str >> arg;
+	if (stack.size() != 1  || stack.top() > 9)
+		throw std::runtime_error("error");
+	stack.push(atoi(arg.c_str()));
+	while (str >> token)
 	{
-		if (isOperator(token))
-		{
-			if (st.size() < 2)
-				throw std::runtime_error("Error");
-			int b = st.top(); st.pop();
-			int a = st.top(); st.pop();
-			int res = applyOp(a, b, token);
-			st.push(res);
-		}
-		else
-		{
-			if (token.size() != 1 || token[0] < '0' || token[0] > '9')
-				throw std::runtime_error("Error");
-			int value = std::atoi(token.c_str());
-			st.push(value);
-		}
+		if (!isOperator(token))
+			std::runtime_error()
 	}
-	if (st.size() != 1)
-		throw std::runtime_error("Error");
-	return st.top();
-}
