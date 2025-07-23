@@ -4,23 +4,37 @@
 #include <vector>
 #include <deque>
 #include <string>
+#include <algorithm>
+#include <iterator>
+#include <cmath>
+#include <ctime>
 
 class PmergeMe
 {
 public:
 	PmergeMe();
-	PmergeMe(const PmergeMe& other);
-	PmergeMe& operator=(const PmergeMe& other);
+	PmergeMe(char **av, int ac);
+	PmergeMe(const PmergeMe &other);
+	PmergeMe &operator=(const PmergeMe &other);
 	~PmergeMe();
 
-	static void sortVector(std::vector<int>& container);
-	static void sortDeque(std::deque<int>& container);
+	void mergeInsertSortVector(int left, int right);
+	void mergeInsertSortDeque(int left, int right);
+	bool isPositiveInteger(const std::string &s);
+
+	void printVec() const;
+	const std::vector<int> &getVec() const;
+
+	void printDeq() const;
+	const std::deque<int> &getDeq() const;
 
 private:
-	template <typename Container>
-	static void mergeInsertSort(Container& cont);
+	std::vector<int> vec;
+	std::deque<int> deq;
 
-	PmergeMe(int dummy); // prevent instantiation
+	static int Jacobsthal(int k);
+	void sortVector();
+	void sortDeque();
 };
 
 #endif

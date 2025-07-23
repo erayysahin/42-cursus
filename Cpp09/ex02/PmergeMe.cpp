@@ -6,77 +6,141 @@
 #include <cstdlib>
 
 PmergeMe::PmergeMe() {}
-PmergeMe::PmergeMe(const PmergeMe& other) { static_cast<void>(other); }
-PmergeMe& PmergeMe::operator=(const PmergeMe& other)
+PmergeMe::PmergeMe(char **av, int ac)
 {
-	static_cast<void>(other);
-	return *this;
+    for (int i = 1; i < ac; ++i)
+    {
+        std::string token = av[i];
+        if (!isPositiveInteger(token))
+        {
+            std::cerr << "Error" << std::endl;
+        }
+        long value = std::atol(token.c_str());
+        if (value <= 0)
+        {
+            std::cerr << "Error" << std::endl;
+        }
+        vec.push_back(static_cast<int>(value));
+        deq.push_back(static_cast<int>(value));
+    }
+}
+PmergeMe::PmergeMe(const PmergeMe &other) { static_cast<void>(other); }
+PmergeMe &PmergeMe::operator=(const PmergeMe &other)
+{
+    static_cast<void>(other);
+    return *this;
 }
 PmergeMe::~PmergeMe() {}
 
-template <typename Container>
-void PmergeMe::mergeInsertSort(Container& cont)
+bool PmergeMe::isPositiveInteger(const std::string &s)
 {
-	typedef typename Container::value_type T;
-	size_t n = cont.size();
-	if (n <= 1)
-		return;
-
-	std::vector<std::pair<T, T> > pairs;
-	std::vector<T> leftovers;
-
-	for (size_t i = 0; i + 1 < n; i += 2)
-	{
-		T a = cont[i];
-		T b = cont[i + 1];
-		if (a < b)
-			pairs.push_back(std::make_pair(a, b));
-		else
-			pairs.push_back(std::make_pair(b, a));
-	}
-	if (n % 2 == 1)
-		leftovers.push_back(cont[n - 1]);
-
-	std::vector<T> winners;
-	winners.reserve(pairs.size() + leftovers.size());
-	for (typename std::vector<std::pair<T, T> >::iterator it = pairs.begin(); it != pairs.end(); ++it)
-		winners.push_back(it->second);
-	if (!leftovers.empty())
-		winners.push_back(leftovers[0]);
-
-	mergeInsertSort(winners);
-
-	Container sorted;
-	sorted.assign(winners.begin(), winners.end());
-
-	for (typename std::vector<std::pair<T, T> >::iterator it = pairs.begin(); it != pairs.end(); ++it)
-	{
-		T loser = it->first;
-		size_t left = 0;
-		size_t right = sorted.size();
-		while (left < right)
-		{
-			size_t mid = (left + right) / 2;
-			if (sorted[mid] < loser)
-				left = mid + 1;
-			else
-				right = mid;
-		}
-		typename Container::iterator pos = sorted.begin();
-		std::advance(pos, left);
-		sorted.insert(pos, loser);
-	}
-
-	cont.assign(sorted.begin(), sorted.end());
+    if (s.empty())
+        return false;
+    for (size_t i = 0; i < s.size(); ++i)
+    {
+        if (s[i] < '0' || s[i] > '9')
+            return false;
+    }
+    return true;
+}
+const std::deque<int> &PmergeMe::getDeq() const
+{
+    return deq;
 }
 
-void PmergeMe::sortVector(std::vector<int>& container)
+void PmergeMe::printDeq() const
 {
-	mergeInsertSort(container);
+    for (std::deque<int>::const_iterator it = deq.begin(); it != deq.end(); ++it)
+    {
+        std::cout << *it << " ";
+    }
+    std::cout << "\n";
+}
+const std::vector<int> &PmergeMe::getVec() const
+{
+    return vec;
+}
+void PmergeMe::printVec() const
+{
+    for (std::vector<int>::const_iterator it = vec.begin(); it != vec.end(); ++it)
+    {
+        std::cout << *it << " ";
+    }
+    std::cout << "\n";
+}
+int PmergeMe::Jacobsthal(int k)
+{
+    return (pow(2, k + 1) + pow(-1, k)) / 3;
 }
 
-void PmergeMe::sortDeque(std::deque<int>& container)
+void PmergeMe::mergeInsertSortVector(int left, int right)
 {
-	mergeInsertSort(container);
+    if (right - left <= 10)
+    {
+        std::sort(vec.begin() + left, vec.begin() + right + 1);
+        return;
+    }
+
+    int mid = left + (right - left) / 2;
+    mergeInsertSortVector(left, mid);
+    mergeInsertSortVector(mid + 1, right);
+
+    std::vector<int> temp;
+    int i = left, j = mid + 1;
+    while (i <= mid && j <= right)
+    {
+        if (vec[i] <= vec[j])
+        {
+            temp.push_back(vec[i++]);
+        }
+        else
+        {
+            temp.push_back(vec[j++]);
+        }
+    }
+    while (i <= mid)
+        temp.push_back(vec[i++]);
+    while (j <= right)
+        temp.push_back(vec[j++]);
+
+    for (size_t k = 0; k < temp.size(); ++k)
+    {
+        vec[left + k] = temp[k];
+    }
 }
 
+void PmergeMe::mergeInsertSortDeque(int left, int right)
+{
+    if (right - left <= 10)
+    {
+        std::sort(deq.begin() + left, deq.begin() + right + 1);
+        return;
+    }
+
+    int mid = left + (right - left) / 2;
+    mergeInsertSortDeque(left, mid);
+    mergeInsertSortDeque(mid + 1, right);
+
+    std::deque<int> temp;
+    int i = left, j = mid + 1;
+    while (i <= mid && j <= right)
+    {
+        if (deq[i] <= deq[j])
+        {
+            temp.push_back(deq[i++]);
+        }
+        else
+        {
+            temp.push_back(deq[j++]);
+        }
+    }
+    while (i <= mid)
+        temp.push_back(deq[i++]);
+    while (j <= right)
+        temp.push_back(deq[j++]);
+
+    for (size_t k = 0; k < temp.size(); ++k)
+    {
+        deq[left + k] = temp[k];
+    }
+}
