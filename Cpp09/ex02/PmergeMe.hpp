@@ -18,8 +18,6 @@ public:
 	PmergeMe &operator=(const PmergeMe &other);
 	~PmergeMe();
 
-	void mergeInsertSortVector(int left, int right);
-	void mergeInsertSortDeque(int left, int right);
 	bool isPositiveInteger(const std::string &s);
 
 	void printVec() const;
@@ -28,13 +26,17 @@ public:
 	void printDeq() const;
 	const std::deque<int> &getDeq() const;
 
+	void fordJohnsonSortVector();
+	void fordJohnsonSortDeque();
+
 private:
 	std::vector<int> vec;
 	std::deque<int> deq;
 
 	static int Jacobsthal(int k);
-	void sortVector();
-	void sortDeque();
+
+	void fordJohnsonSort(std::vector<int> &data);
+	void fordJohnsonSort(std::deque<int> &data);
 };
 
 #endif
