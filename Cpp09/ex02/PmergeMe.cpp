@@ -64,11 +64,35 @@ void PmergeMe::printVec() const
 }
 int PmergeMe::Jacobsthal(int k)
 {
-    if (k == 0)
-        return 0;
-    if (k == 1)
-        return 1;
-    return Jacobsthal(k - 1) + 2 * Jacobsthal(k - 2);
+    std::vector<size_t> order;
+    std::set<size_t> added;
+    size_t j = 1;
+
+    while (true)
+    {
+        int idx = (j == 0) ? 1 : Jacobsthal(j);
+        if (idx >= static_cast<int>(n))
+            break;
+
+        if (added.find(idx) == added.end())
+        {
+            order.push_back(idx);
+            added.insert(idx);
+        }
+
+        ++j;
+    }
+
+    for (size_t i = 0; i < n; ++i)
+    {
+        if (added.find(i) == added.end())
+        {
+            order.push_back(i);
+            added.insert(i);
+        }
+    }
+
+    return order;
 }
 
 
@@ -102,6 +126,7 @@ void PmergeMe::fordJohnsonSort(std::vector<int> &data)
             maxs.push_back(data[i]);
         }
     }
+
     int last = -1;
     bool hasLast = false;
     if (i < data.size())
@@ -112,16 +137,23 @@ void PmergeMe::fordJohnsonSort(std::vector<int> &data)
 
     fordJohnsonSort(mins);
 
-    for (size_t j = 0; j < maxs.size(); ++j)
+    std::vector<size_t> insertionOrder = getJacobsthalInsertionOrder(maxs.size());
+
+    for (size_t k = 0; k < insertionOrder.size(); ++k)
     {
-        int idx = (j == 0) ? 1 : Jacobsthal(j);
-        if (idx > static_cast<int>(mins.size()))
-            idx = mins.size();
-        mins.insert(std::upper_bound(mins.begin(), mins.end(), maxs[j]), maxs[j]);
+        size_t j = insertionOrder[k];
+        if (j >= maxs.size())
+            continue;
+
+        std::vector<int>::iterator pos = std::upper_bound(mins.begin(), mins.end(), maxs[j]);
+        mins.insert(pos, maxs[j]);
     }
 
     if (hasLast)
-        mins.insert(std::upper_bound(mins.begin(), mins.end(), last), last);
+    {
+        std::vector<int>::iterator pos = std::upper_bound(mins.begin(), mins.end(), last);
+        mins.insert(pos, last);
+    }
 
     data = mins;
 }
@@ -153,17 +185,30 @@ void PmergeMe::fordJohnsonSort(std::deque<int> &data)
         last = data[i];
         hasLast = true;
     }
+
     std::vector<int> minsVec(mins.begin(), mins.end());
     fordJohnsonSort(minsVec);
+
     mins.assign(minsVec.begin(), minsVec.end());
 
-    for (size_t j = 0; j < maxs.size(); ++j)
+    std::vector<size_t> insertionOrder = getJacobsthalInsertionOrder(maxs.size());
+
+    for (size_t k = 0; k < insertionOrder.size(); ++k)
     {
-        mins.insert(std::upper_bound(mins.begin(), mins.end(), maxs[j]), maxs[j]);
+        size_t j = insertionOrder[k];
+        if (j >= maxs.size())
+            continue;
+
+        std::deque<int>::iterator pos = std::upper_bound(mins.begin(), mins.end(), maxs[j]);
+        mins.insert(pos, maxs[j]);
     }
 
     if (hasLast)
-        mins.insert(std::upper_bound(mins.begin(), mins.end(), last), last);
+    {
+        std::deque<int>::iterator pos = std::upper_bound(mins.begin(), mins.end(), last);
+        mins.insert(pos, last);
+    }
 
     data = mins;
 }
+
