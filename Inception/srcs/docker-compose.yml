@@ -1,0 +1,78 @@
+services:
+  mariadb:
+    image: mariadb:local
+    build:
+      context: ./requirements/mariadb
+    container_name: mariadb
+    volumes:
+      - /home/erasahin/data/mariadb:/var/lib/mysql
+    networks:
+      - webnet
+    secrets:
+      - db_root_password
+      - db_password
+      - credentials
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$$(cat /run/secrets/db_root_password) --silent || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
+
+  wordpress:
+    image: wordpress:local
+    build:
+      context: ./requirements/wordpress
+    container_name: wordpress
+    volumes:
+      - /home/erasahin/data/wordpress:/var/www/html
+    networks:
+      - webnet
+    secrets:
+      - db_password
+      - credentials
+    env_file:
+      - .env
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "wp core is-installed --path=/var/www/html --allow-root > /dev/null 2>&1 && nc -z 127.0.0.1 9000 || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 40s
+    depends_on:
+      mariadb:
+        condition: service_healthy
+
+  nginx:
+    image: nginx:local
+    build:
+      context: ./requirements/nginx
+    ports:
+      - "443:443"
+    container_name: nginx
+    volumes:
+      - /home/erasahin/data/wordpress:/var/www/html:ro
+    networks:
+      - webnet
+    secrets:
+      - credentials
+    env_file:
+      - .env
+    restart: always
+    depends_on:
+      wordpress:
+        condition: service_healthy
+
+networks:
+  webnet:
+    driver: bridge
+
+secrets:
+  credentials:
+    file: ../secrets/credentials.txt
+  db_root_password:
+    file: ../secrets/db_root_password.txt
+  db_password:
+    file: ../secrets/db_password.txt
