@@ -1,17 +1,14 @@
-FROM alpine:3.20.3
+FROM alpine:3.21
 
-RUN apk update && apk add --no-cache nginx openssl bash
+RUN apk add --no-cache nginx openssl
 
-RUN mkdir -p /etc/nginx/ssl /var/www/html
+# Konfig dosyası
+COPY conf/nginx.conf /etc/nginx/nginx.conf
 
-COPY ./conf/nginx.conf /etc/nginx/nginx.conf
-COPY ./tools/entrypoint.sh /tmp/entrypoint.sh
-
-RUN chmod +x /tmp/entrypoint.sh
+# Entrypoint: sertifika üret + placeholder doldur + nginx başlat
+COPY tools/entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh \
+ && mkdir -p /var/www/html /etc/nginx/ssl
 
 EXPOSE 443
-
-ENTRYPOINT [ "tmp/entrypoint.sh" ]
-
-CMD ["nginx", "-g", "daemon off;"]
-
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

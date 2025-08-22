@@ -1,62 +1,112 @@
-#!/bin/bash
+#!/bin/sh
+set -eu
+[ "${DEBUG:-0}" = "1" ] && set -x
 
-chown -R www-data:www-data /var/www/html
-chmod -R 755 /var/www/html
+WP_PATH=/var/www/html
 
-if [ -f "/run/secrets/db_password" ]; then
-	MYSQL_PASSWORD=$(cat /run/secrets/db_password)
+# ---- WP-CLI bellek düzeltmesi ----
+# PHAR açarken bellek taşmasını önlemek için tüm wp komutlarını bu wrapper ile çağır.
+WP() { php -d memory_limit=512M /usr/local/bin/wp "$@"; }
+# (İstersen 512M yerine -1 da verebilirsin: php -d memory_limit=-1)
+
+# .env'den gelecekler
+: "${MYSQL_HOST:=mariadb}"
+: "${MYSQL_DATABASE:=}"
+: "${MYSQL_USER:=}"
+: "${DOMAIN_NAME:=}"
+: "${TITLE:=Inception WP}"
+
+SITE_URL="${WP_URL:-}"
+[ -z "$SITE_URL" ] && [ -n "$DOMAIN_NAME" ] && SITE_URL="https://${DOMAIN_NAME}"
+
+# Secrets
+DB_PASSWORD="$(cat /run/secrets/db_password 2>/dev/null || true)"
+[ -n "$DB_PASSWORD" ] || { echo "[wp] HATA: /run/secrets/db_password boş ya da yok."; exit 1; }
+
+# credentials dosyasını yükle (KEY=VAL satırları)
+if [ -f /run/secrets/credentials ]; then
+  set -a
+  . /run/secrets/credentials
+  set +a
 fi
 
-if [ -f "/run/secrets/credentials" ]; then
-	export MYSQL_USER=$(grep MYSQL_USER /run/secrets/credentials | cut -d '=' -f2 | tr -d '[:space:]')
-	export MYSQL_DATABASE=$(grep MYSQL_DATABASE /run/secrets/credentials | cut -d '=' -f2 | tr -d '[:space:]')
-	export ADMIN_EMAIL=$(grep ADMIN_EMAIL /run/secrets/credentials | cut -d '=' -f2 | tr -d '[:space:]')
-	export ADMIN_PASSWORD=$(grep ADMIN_PASSWORD /run/secrets/credentials | cut -d '=' -f2 | tr -d '[:space:]')
-	export WP_ADMIN_NAME=$(grep WP_ADMIN_NAME /run/secrets/credentials | cut -d '=' -f2 | tr -d '[:space:]')
-	export WP_USER_LOGIN=$(grep WP_USER_LOGIN /run/secrets/credentials | cut -d '=' -f2 | tr -d '[:space:]')
-	export WP_USER_PASSWORD=$(grep WP_USER_PASSWORD /run/secrets/credentials | cut -d '=' -f2 | tr -d '[:space:]')
-	export WP_USER_EMAIL=$(grep WP_USER_EMAIL /run/secrets/credentials | cut -d '=' -f2 | tr -d '[:space:]')
-	export WP_HOST=$(grep WP_HOST /run/secrets/credentials | cut -d '=' -f2 | tr -d '[:space:]')
+# Eski isimlerle gelen değerleri de destekle
+: "${MYSQL_DATABASE:=${MYSQL_DB:-$MYSQL_DATABASE}}"
+: "${MYSQL_USER:=${MYSQL_USERNAME:-$MYSQL_USER}}"
+: "${MYSQL_HOST:=${WP_HOST:-$MYSQL_HOST}}"
+
+# Admin bilgileri (credentials içinden) – ADMIN_* fallback kabul
+: "${WP_ADMIN_NAME:=${ADMIN_USER:-${ADMIN_NAME:-}}}"
+: "${WP_ADMIN_PASSWORD:=${ADMIN_PASSWORD:-}}"
+: "${WP_ADMIN_EMAIL:=${ADMIN_EMAIL:-}}"
+[ -n "$WP_ADMIN_NAME" ]     || { echo "[wp] HATA: WP_ADMIN_NAME/ADMIN_* yok."; exit 1; }
+[ -n "$WP_ADMIN_PASSWORD" ] || { echo "[wp] HATA: WP_ADMIN_PASSWORD/ADMIN_PASSWORD yok."; exit 1; }
+[ -n "$WP_ADMIN_EMAIL" ]    || { echo "[wp] HATA: WP_ADMIN_EMAIL/ADMIN_EMAIL yok."; exit 1; }
+
+# İkinci kullanıcı (opsiyonel)
+: "${WP_USER_NAME:=${WP_USER_LOGIN:-}}"
+WP_USER_PASS="${WP_USER_PASSWORD:-}"
+WP_USER_MAIL="${WP_USER_EMAIL:-}"
+
+# Zorunlu alan kontrolü
+[ -n "$MYSQL_DATABASE" ] || { echo "[wp] HATA: MYSQL_DATABASE eksik."; exit 1; }
+[ -n "$MYSQL_USER" ]     || { echo "[wp] HATA: MYSQL_USER eksik."; exit 1; }
+
+# Dizin ve sahiplik
+mkdir -p "$WP_PATH"
+chown -R www-data:www-data "$WP_PATH"
+
+# WordPress çekirdeği
+if [ ! -f "$WP_PATH/wp-includes/version.php" ]; then
+  echo "[wp] core download"
+  WP core download --path="$WP_PATH" --allow-root
 fi
 
-if  [ -z "$MYSQL_PASSWORD" ] || [ -z "$MYSQL_USER" ] || [ -z "$MYSQL_DATABASE" ] || [ -z "$ADMIN_EMAIL" ] || [ -z "$ADMIN_PASSWORD" ]\
- || [ -z "$WP_ADMIN_NAME" ] || [ -z "$WP_USER_LOGIN" ] || [ -z "$WP_USER_PASSWORD" ] || [ -z "$WP_USER_EMAIL" ] || [ -z "$WP_HOST" ]; then
-	echo "Missing required secrets"
-	exit 1
+# MariaDB portu açılana kadar bekle
+echo "[wp] MariaDB bekleniyor (${MYSQL_HOST}:3306)..."
+until nc -z -w 2 "$MYSQL_HOST" 3306; do
+  sleep 2
+done
+
+# wp-config
+if [ ! -f "$WP_PATH/wp-config.php" ]; then
+  echo "[wp] config create"
+  WP config create --path="$WP_PATH" --allow-root \
+    --dbname="$MYSQL_DATABASE" \
+    --dbuser="$MYSQL_USER" \
+    --dbpass="$DB_PASSWORD" \
+    --dbhost="$MYSQL_HOST" \
+    --dbprefix="wp_" \
+    --skip-check
+
+  WP config shuffle-salts        --path="$WP_PATH" --allow-root
+  WP config set FS_METHOD direct --path="$WP_PATH" --allow-root
 fi
 
+# İlk kurulum
+if ! WP core is-installed --path="$WP_PATH" --allow-root >/dev/null 2>&1; then
+  if [ -z "$SITE_URL" ]; then
+    echo "[wp] Uyarı: SITE_URL yok, http://localhost kullanılacak."
+    SITE_URL="http://localhost"
+  fi
 
-if [ ! -f /var/www/html/wp-config.php ]; then
-	echo "Wordpress is preparing..."
-max=4
-counter=0
-	wp core download --allow-root
+  echo "[wp] core install (${SITE_URL})"
+  WP core install --path="$WP_PATH" --allow-root \
+    --url="$SITE_URL" \
+    --title="$TITLE" \
+    --admin_user="$WP_ADMIN_NAME" \
+    --admin_password="$WP_ADMIN_PASSWORD" \
+    --admin_email="$WP_ADMIN_EMAIL"
 
-	until wp config create --allow-root \
-		--dbname="$MYSQL_DATABASE" \
-		--dbuser="$MYSQL_USER" \
-		--dbpass="$MYSQL_PASSWORD" \
-		--dbhost="$WP_HOST"
-	do
-		if [ $counter -eq $max ]; then
-			echo "wp-config.php oluşturulamadı. Çıkılıyor..."
-			exit 1
-		fi
-		counter=$((counter+1))
-		echo "wp-config.php oluşturulamadı. 5 saniye sonra yeniden denenecek..."
-		sleep 5
-	done
-
-	wp core install --allow-root \
-		--url="$DOMAIN_NAME" \
-		--title="$TITLE" \
-		--admin_user="$WP_ADMIN_NAME" \
-		--admin_password="$ADMIN_PASSWORD" \
-		--admin_email="$ADMIN_EMAIL"
-	wp user create --allow-root \
-		$WP_USER_LOGIN $WP_USER_EMAIL \
-		--user_pass=$WP_USER_PASSWORD
-
+  if [ -n "$WP_USER_NAME" ] && [ -n "$WP_USER_PASS" ] && [ -n "$WP_USER_MAIL" ]; then
+    WP user create --path="$WP_PATH" --allow-root \
+      "$WP_USER_NAME" "$WP_USER_MAIL" --user_pass="$WP_USER_PASS" --role=author
+  fi
 fi
 
+# İzinler
+find "$WP_PATH" -type d -exec chmod 755 {} \;
+find "$WP_PATH" -type f -exec chmod 644 {} \;
+
+echo "[wp] starting php-fpm…"
 exec "$@"

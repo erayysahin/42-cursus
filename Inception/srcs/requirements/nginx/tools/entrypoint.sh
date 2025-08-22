@@ -1,33 +1,24 @@
-#!/bin/bash
+#!/bin/sh
+set -euo pipefail
 
-mkdir -p /etc/ssl/certs /etc/ssl/private
-if [ -f "/run/secrets/credentials" ]; then
-    TMP=$(grep SUBJECT /run/secrets/credentials)
-    export SUBJECT=${TMP#*=}
-    export KEY=$(grep KEY /run/secrets/credentials | cut -d '=' -f2 | tr -d '[:space:]')
-    export CRT=$(grep CRT /run/secrets/credentials | cut -d '=' -f2 | tr -d '[:space:]')
+: "${DOMAIN_NAME:?DOMAIN_NAME yok (.env içinde olmalı)}"
+: "${CRT:=/etc/nginx/ssl/nginx.crt}"
+: "${KEY:=/etc/nginx/ssl/nginx.key}"
+: "${SUBJECT:=/CN=${DOMAIN_NAME}}"
+
+mkdir -p "$(dirname "$CRT")" "$(dirname "$KEY")"
+
+# Sertifika yoksa üret
+if [ ! -f "$CRT" ] || [ ! -f "$KEY" ]; then
+  openssl req -x509 -nodes -days 365 -newkey rsa:4096 \
+    -keyout "$KEY" -out "$CRT" -subj "$SUBJECT"
 fi
 
-if [ -z "$SUBJECT" ] || [ -z "$KEY" ] || [ -z "$CRT" ]; then
-    echo "Missing required secrets"
-    exit 1
-fi
-sed -i "s|!DOMAIN!|$DOMAIN_NAME|g" /etc/nginx/nginx.conf
-sed -i "s|!CRT!|$CRT|g" /etc/nginx/nginx.conf
-sed -i "s|!KEY!|$KEY|g" /etc/nginx/nginx.conf
+# Placeholder'ları doldur
+sed -i \
+  -e "s|!DOMAIN!|$DOMAIN_NAME|g" \
+  -e "s|!CRT!|$CRT|g" \
+  -e "s|!KEY!|$KEY|g" \
+  /etc/nginx/nginx.conf
 
-echo "SSL sertifikası oluşturuluyor..."
-
-if [ -f "$CRT" ] && [ -f "$KEY" ]; then
-    echo "SSL sertifikası zaten var!"
-    exec "$@"
-fi
-
-openssl req -x509 -nodes -days 365 -newkey rsa:4096 \
-    -keyout "$KEY" \
-    -out $CRT \
-    -subj "$SUBJECT"
-
-echo "SSL sertifikası oluşturuldu!"
-
-exec "$@"
+exec nginx -g 'daemon off;'

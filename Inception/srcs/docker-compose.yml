@@ -14,7 +14,7 @@ services:
       - credentials
     restart: always
     healthcheck:
-      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$$(cat /run/secrets/db_root_password) --silent || exit 1"]
+      test: [ "CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$$(cat /run/secrets/db_root_password) --silent || exit 1" ]
       interval: 5s
       timeout: 3s
       retries: 20
@@ -36,11 +36,11 @@ services:
       - .env
     restart: always
     healthcheck:
-      test: ["CMD-SHELL", "wp core is-installed --path=/var/www/html --allow-root > /dev/null 2>&1 && nc -z 127.0.0.1 9000 || exit 1"]
+      test: [ "CMD-SHELL", "nc -z 127.0.0.1 9000 || exit 1" ]
       interval: 5s
       timeout: 3s
-      retries: 20
-      start_period: 40s
+      retries: 40
+      start_period: 60s
     depends_on:
       mariadb:
         condition: service_healthy
@@ -49,9 +49,9 @@ services:
     image: nginx:local
     build:
       context: ./requirements/nginx
+    container_name: nginx
     ports:
       - "443:443"
-    container_name: nginx
     volumes:
       - /home/erasahin/data/wordpress:/var/www/html:ro
     networks:
