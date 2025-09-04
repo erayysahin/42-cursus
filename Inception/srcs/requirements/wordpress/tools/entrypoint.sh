@@ -62,11 +62,6 @@ if [ ! -f "$WP_PATH/wp-includes/version.php" ]; then
   WP core download --path="$WP_PATH" --allow-root
 fi
 
-# MariaDB portu açılana kadar bekle
-echo "[wp] MariaDB bekleniyor (${MYSQL_HOST}:3306)..."
-until nc -z -w 2 "$MYSQL_HOST" 3306; do
-  sleep 2
-done
 
 # wp-config
 if [ ! -f "$WP_PATH/wp-config.php" ]; then

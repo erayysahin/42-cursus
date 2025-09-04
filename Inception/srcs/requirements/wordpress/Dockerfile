@@ -6,15 +6,15 @@ ENV TZ=Europe/Istanbul
 RUN apk add --no-cache \
     curl ca-certificates tar less tzdata \
     netcat-openbsd \
-    php${PHPV} php${PHPV}-fpm php${PHPV}-cli php${PHPV}-common \
-    php${PHPV}-mysqli php${PHPV}-mbstring php${PHPV}-curl \
-    php${PHPV}-xml php${PHPV}-zip php${PHPV}-gd php${PHPV}-intl \
-    php${PHPV}-phar php${PHPV}-opcache \
-    php${PHPV}-tokenizer
+    php83 php83-fpm php83-cli php83-common \
+    php83-mysqli php83-mbstring php83-curl \
+    php83-xml php83-zip php83-gd php83-intl \
+    php83-phar php83-opcache \
+    php83-tokenizer
 
 
 # WP-CLI 'php'ı /usr/bin/php ile çağırır; garanti için symlink
-RUN ln -sf /usr/bin/php${PHPV} /usr/bin/php
+RUN ln -sf /usr/bin/php83 /usr/bin/php
 
 # www-data ve web kökü (varsa yeniden yaratmaya çalışma)
 RUN if ! grep -qE '^www-data:' /etc/group; then addgroup -S www-data; fi \
@@ -34,12 +34,12 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime \
 
 # (Opsiyonel) OPcache iyileştirmeleri
 RUN printf "opcache.enable=1\nopcache.memory_consumption=128\nopcache.validate_timestamps=0\n" \
-    > /etc/php${PHPV}/conf.d/99-opcache.ini
+    > /etc/php83/conf.d/99-opcache.ini
 
-RUN echo "memory_limit=512M" > /etc/php${PHPV}/conf.d/zz-cli-memory.ini
+RUN echo "memory_limit=512M" > /etc/php83/conf.d/zz-cli-memory.ini
 
 # PHP-FPM havuzu
-COPY conf/www.conf /etc/php${PHPV}/php-fpm.d/www.conf
+COPY conf/www.conf /etc/php83/php-fpm.d/www.conf
 
 # Entrypoint
 COPY ./tools/entrypoint.sh /usr/local/bin/entrypoint.sh

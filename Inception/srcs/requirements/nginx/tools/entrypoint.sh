@@ -16,9 +16,10 @@ fi
 
 # Placeholder'ları doldur
 sed -i \
-  -e "s|!DOMAIN!|$DOMAIN_NAME|g" \
+  -e "s|!SERVER_NAME!|$DOMAIN_NAME|g" \
   -e "s|!CRT!|$CRT|g" \
   -e "s|!KEY!|$KEY|g" \
-  /etc/nginx/nginx.conf
+  /etc/nginx/http.d/default.conf
+
 
 exec nginx -g 'daemon off;'
