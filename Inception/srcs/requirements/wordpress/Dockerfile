@@ -32,9 +32,6 @@ RUN curl -fsSL -o /usr/local/bin/wp https://raw.githubusercontent.com/wp-cli/bui
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime \
     && echo $TZ > /etc/timezone
 
-# (Opsiyonel) OPcache iyileştirmeleri
-RUN printf "opcache.enable=1\nopcache.memory_consumption=128\nopcache.validate_timestamps=0\n" \
-    > /etc/php83/conf.d/99-opcache.ini
 
 RUN echo "memory_limit=512M" > /etc/php83/conf.d/zz-cli-memory.ini
 

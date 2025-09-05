@@ -17,8 +17,8 @@ fi
 # Placeholder'ları doldur
 sed -i \
   -e "s|!SERVER_NAME!|$DOMAIN_NAME|g" \
-  -e "s|!CRT!|$CRT|g" \
-  -e "s|!KEY!|$KEY|g" \
+  -e "s|¿CERTFC?|$CRT|g" \
+  -e "s|¿KEY?|$KEY|g" \
   /etc/nginx/http.d/default.conf
 
 

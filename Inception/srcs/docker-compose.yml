@@ -5,7 +5,7 @@ services:
       context: ./requirements/mariadb
     container_name: mariadb
     volumes:
-      - /home/erasahin/data/mariadb:/var/lib/mysql
+      - mariadb_data:/var/lib/mysql
     networks:
       - webnet
     secrets:
@@ -26,7 +26,7 @@ services:
       context: ./requirements/wordpress
     container_name: wordpress
     volumes:
-      - /home/erasahin/data/wordpress:/var/www/html
+      - wp_data:/var/www/html
     networks:
       - webnet
     secrets:
@@ -53,7 +53,7 @@ services:
     ports:
       - "443:443"
     volumes:
-      - /home/erasahin/data/wordpress:/var/www/html:ro
+      - wp_data:/var/www/html:ro
     networks:
       - webnet
     secrets:
@@ -68,6 +68,20 @@ services:
 networks:
   webnet:
     driver: bridge
+
+volumes:
+  mariadb_data:
+    driver: local
+    driver_opts:
+      type: none
+      device: /home/erasahin/data/mariadb
+      o: bind
+  wp_data:
+    driver: local
+    driver_opts:
+      type: none
+      device: /home/erasahin/data/wordpress
+      o: bind
 
 secrets:
   credentials:

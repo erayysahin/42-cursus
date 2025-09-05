@@ -7,9 +7,7 @@ WP_PATH=/var/www/html
 # ---- WP-CLI bellek düzeltmesi ----
 # PHAR açarken bellek taşmasını önlemek için tüm wp komutlarını bu wrapper ile çağır.
 WP() { php -d memory_limit=512M /usr/local/bin/wp "$@"; }
-# (İstersen 512M yerine -1 da verebilirsin: php -d memory_limit=-1)
 
-# .env'den gelecekler
 : "${MYSQL_HOST:=mariadb}"
 : "${MYSQL_DATABASE:=}"
 : "${MYSQL_USER:=}"
@@ -35,7 +33,7 @@ fi
 : "${MYSQL_USER:=${MYSQL_USERNAME:-$MYSQL_USER}}"
 : "${MYSQL_HOST:=${WP_HOST:-$MYSQL_HOST}}"
 
-# Admin bilgileri (credentials içinden) – ADMIN_* fallback kabul
+
 : "${WP_ADMIN_NAME:=${ADMIN_USER:-${ADMIN_NAME:-}}}"
 : "${WP_ADMIN_PASSWORD:=${ADMIN_PASSWORD:-}}"
 : "${WP_ADMIN_EMAIL:=${ADMIN_EMAIL:-}}"
@@ -59,14 +57,14 @@ chown -R www-data:www-data "$WP_PATH"
 # WordPress çekirdeği
 if [ ! -f "$WP_PATH/wp-includes/version.php" ]; then
   echo "[wp] core download"
-  WP core download --path="$WP_PATH" --allow-root
+  wp core download --path="$WP_PATH" --allow-root
 fi
 
 
 # wp-config
 if [ ! -f "$WP_PATH/wp-config.php" ]; then
   echo "[wp] config create"
-  WP config create --path="$WP_PATH" --allow-root \
+  wp config create --path="$WP_PATH" --allow-root \
     --dbname="$MYSQL_DATABASE" \
     --dbuser="$MYSQL_USER" \
     --dbpass="$DB_PASSWORD" \
@@ -74,19 +72,19 @@ if [ ! -f "$WP_PATH/wp-config.php" ]; then
     --dbprefix="wp_" \
     --skip-check
 
-  WP config shuffle-salts        --path="$WP_PATH" --allow-root
-  WP config set FS_METHOD direct --path="$WP_PATH" --allow-root
+  wp config shuffle-salts        --path="$WP_PATH" --allow-root
+  wp config set FS_METHOD direct --path="$WP_PATH" --allow-root
 fi
 
 # İlk kurulum
-if ! WP core is-installed --path="$WP_PATH" --allow-root >/dev/null 2>&1; then
+if ! wp core is-installed --path="$WP_PATH" --allow-root >/dev/null 2>&1; then
   if [ -z "$SITE_URL" ]; then
     echo "[wp] Uyarı: SITE_URL yok, http://localhost kullanılacak."
     SITE_URL="http://localhost"
   fi
 
   echo "[wp] core install (${SITE_URL})"
-  WP core install --path="$WP_PATH" --allow-root \
+  wp core install --path="$WP_PATH" --allow-root \
     --url="$SITE_URL" \
     --title="$TITLE" \
     --admin_user="$WP_ADMIN_NAME" \
@@ -94,7 +92,7 @@ if ! WP core is-installed --path="$WP_PATH" --allow-root >/dev/null 2>&1; then
     --admin_email="$WP_ADMIN_EMAIL"
 
   if [ -n "$WP_USER_NAME" ] && [ -n "$WP_USER_PASS" ] && [ -n "$WP_USER_MAIL" ]; then
-    WP user create --path="$WP_PATH" --allow-root \
+    wp user create --path="$WP_PATH" --allow-root \
       "$WP_USER_NAME" "$WP_USER_MAIL" --user_pass="$WP_USER_PASS" --role=author
   fi
 fi
