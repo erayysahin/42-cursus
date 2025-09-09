@@ -4,6 +4,8 @@ DIR=srcs
 .PHONY: up down build fclean re logs
 
 up:
+	sudo mkdir -p ~/data/wordpress
+	sudo mkdir -p ~/data/mariadb
 	@$(COMPOSE) -f $(DIR)/docker-compose.yml up -d
 
 down:
